@@ -1,0 +1,16 @@
+Agents 101 · The Stamp Drawer
+
+Open index.html in a browser. Work through the four choices, then return a
+tool message for a different card. The browser runs the counter locally.
+All the model replies are scripted. You can use the page with Wi-Fi off.
+
+The synthetic-traces.json file contains the three scripted exchanges. The
+answer-key.txt sheet and cards.json give you a second way to check the
+exercise. With Python 3 installed, run the reference implementation from
+this directory.
+
+  python3 simulate.py --card Dusk
+  python3 simulate.py --check
+
+This folder is also the complete static site. Copy its contents unchanged
+to a static host to serve the lesson. Reuse terms are in REUSE.txt.

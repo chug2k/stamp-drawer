@@ -1,0 +1,5 @@
+{
+  "Tide": {"ticket": "press-17", "marks": ["ring", "bar", "ring", "ring", "bar"]},
+  "Fern": {"ticket": "press-24", "marks": ["bar", "ring", "bar", "ring", "bar"]},
+  "Dusk": {"ticket": "press-38", "marks": ["ring", "ring", "bar", "ring", "ring"]}
+}

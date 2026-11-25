@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+
+<meta name="description" content="A hands-on introduction to tool calling with a scripted model, a stamp card and an independently checkable result.">
+<title>Count the rings. · Agents 101</title>
+<style>:root {
+  --ink:#1c302c; --muted:#4f625b; --pine:#224f40; --pine-dark:#173e33; --rust:#a14329;
+  --paper:#fbf8ef; --sand:#f1ebda; --line:#c8c7b6; --white:#fffdf7; --sky:#dce8d9;
+  --serif:"Baskervville",Baskerville,"Iowan Old Style",Georgia,serif;
+  --sans:"Atkinson Hyperlegible Next","Helvetica Neue",Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Consolas,monospace;
+}
+* { box-sizing:border-box }
+html { scroll-behavior:smooth;scroll-padding-top:1rem }
+body { margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 var(--sans);-webkit-text-size-adjust:100% }
+[hidden] { display:none !important }
+a { color:var(--pine);text-underline-offset:.22em }
+button,input,select { font:inherit;color:inherit }
+button,select { cursor:pointer }
+button { touch-action:manipulation }
+:focus-visible { outline:3px solid #ab4b26;outline-offset:3px }
+.skip { position:absolute;left:12px;top:-100px;background:var(--white);z-index:2;padding:.7rem 1rem }
+.skip:focus { top:8px }
+.wrap { width:min(1120px,calc(100% - 64px));margin-inline:auto }
+.mast { border-block:5px solid var(--pine);border-bottom:1px solid var(--line) }
+.bar,.footer { display:flex;justify-content:space-between;align-items:center;gap:1rem }
+.bar { min-height:72px }
+.wordmark { display:inline-flex;gap:.32rem;align-items:baseline;text-decoration:none;font:700 1.55rem/1 var(--serif);letter-spacing:-.055em;color:var(--ink) }
+.wordmark em { font-weight:400 }.mark { display:inline-grid;place-items:center;align-self:center;width:1.75rem;height:1.75rem;margin-right:.25rem;border:1px solid var(--rust);border-radius:50%;color:var(--rust);font:1.32rem/1 var(--sans) }
+nav { display:flex;gap:1.5rem;align-items:center }nav a { padding:.65rem .15rem;text-decoration:none;font-weight:600;font-size:.9rem }nav a:hover,.footer a:hover { text-decoration:underline }
+.hero { display:grid;grid-template-columns:1.16fr .84fr;gap:5%;align-items:center;padding:clamp(2.2rem,6vw,5.4rem) 0 clamp(2.3rem,5vw,4.4rem) }
+.eyebrow,.packet-label,.field-title { font:700 .73rem/1.5 var(--sans);text-transform:uppercase;letter-spacing:.105em;color:var(--muted);margin:0 0 .65rem }
+.inkdot { display:inline-block;width:.55rem;height:.55rem;background:var(--pine);border-radius:50%;margin-right:.55rem }.amber { background:var(--rust) }
+h1,h2,h3,h4,p { margin-top:0 }h1,h2,h3,h4 { text-wrap:balance }
+h1,h2,h3 { font:400 2rem/1.08 var(--serif);letter-spacing:-.045em }
+h1 { font-size:clamp(3.5rem,7.8vw,6.65rem);margin:.35rem 0 .95rem;max-width:9.5em;line-height:.97 }
+h2 { font-size:clamp(2.18rem,4.6vw,3.7rem);margin:0 }
+h3 { font-size:clamp(1.65rem,2.7vw,2.4rem);margin:0 0 .8rem }
+.dek,.section-intro { max-width:46rem;font-size:clamp(1rem,1.75vw,1.2rem);color:var(--muted);line-height:1.55 }
+.dek { max-width:35rem;margin-bottom:1.4rem }
+.button { display:inline-flex;align-items:center;justify-content:center;gap:.85rem;min-height:44px;padding:.65rem 1.08rem;border-radius:6px;border:1px solid var(--pine);background:transparent;color:var(--pine);font:700 .92rem/1.35 var(--sans);text-decoration:none }
+.button.primary { color:var(--white);background:var(--pine) }.button:hover { background:var(--sky) }.button.primary:hover { background:var(--pine-dark) }
+button:disabled { opacity:.44;cursor:default }
+.hero-art { min-width:0 }
+.art-plate,.specimen { position:relative;isolation:isolate;overflow:hidden;border:1px solid #a7b8a7;background-color:#e7ecdd;border-radius:8px }
+.art-plate:before,.specimen:before { content:"";position:absolute;z-index:-1;inset:0;opacity:.35;background-image:linear-gradient(90deg,transparent 95%,#b6c3b0 95%),linear-gradient(0deg,transparent 95%,#b6c3b0 95%);background-size:18px 18px }
+.art-plate { padding:1.3rem 1.5rem 1.45rem;transform:rotate(1deg);box-shadow:3px 4px 0 #d5d6c7 }
+.plate-caption,.spec-header,.spec-foot { display:flex;align-items:center;justify-content:space-between;gap:.6rem }
+.plate-caption,.spec-foot { font:600 .69rem/1.5 var(--mono);letter-spacing:.045em;color:var(--muted) }
+.plate-caption { padding-bottom:.6rem;border-bottom:1px solid #a7b8a7;text-transform:uppercase }.art-title { font:400 1.65rem/1.1 var(--serif);margin:1rem 0 .8rem }
+.file-strips { display:grid;gap:.42rem }.file-strip { display:flex;align-items:center;justify-content:space-between;gap:.45rem;padding:.55rem .7rem;border:1px solid #abb5a5;border-left:3px solid var(--pine);background:var(--white);font-size:.77rem }
+.file-strip code { font:600 .85rem/1.4 var(--mono);white-space:normal }.file-strip.output { border-color:#a09074;border-left-color:var(--rust);background:#f5ebd6 }
+.specimen { padding:1rem 1.2rem }.spec-header { font:600 .72rem/1.4 var(--mono);letter-spacing:.045em;color:var(--muted);border-bottom:1px solid #a7b8a7;padding-bottom:.6rem }
+.spec-title { font:400 2.65rem/1.1 var(--serif);margin:.75rem 0;color:var(--pine-dark) }
+.impressions { display:flex;gap:clamp(.5rem,1.8vw,1.05rem);align-items:center;margin:.6rem 0 1rem;min-height:1.8rem }
+.impression { display:grid;place-items:center;width:1.8rem;height:1.8rem;transform:rotate(-9deg) }.impression:nth-child(even) { transform:rotate(8deg) }
+.impression.ring:before { content:"";width:1.34rem;height:1.34rem;border:3px solid var(--rust);border-radius:48% 52% 50% 49%;box-shadow:0 0 0 1px #a1432920 }
+.impression.bar:before { content:"";display:block;width:1.35rem;height:.3rem;background:var(--pine);border-radius:2px }
+.spec-foot { border-top:1px dashed #a7b8a7;padding-top:.55rem }
+.sr { position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0 }
+.section { border-top:1px solid var(--line);padding:clamp(1.7rem,3.4vw,3rem) 0 }
+.section-head { display:flex;align-items:baseline;justify-content:space-between;gap:1rem;margin:0 0 1.2rem }.section-head p:not(.eyebrow) { margin:0;color:var(--muted);font-size:.95rem }
+.route { list-style:none;display:grid;grid-template-columns:repeat(4,1fr);gap:3px;margin:0;padding:0;border-bottom:0;counter-reset:decision }
+.route li { counter-increment:decision;border-top:3px solid var(--line);padding:.6rem .1rem .75rem;color:var(--muted);font-size:.85rem }
+.route li:before { content:counter(decision) ".";font:400 .8rem var(--mono);margin-right:.45rem }.route li.current { color:var(--rust);border-top-color:var(--rust);font-weight:700 }.route li.done { border-top-color:var(--pine);color:var(--pine) }
+.workbench,.practice-grid,.replay-board { display:grid;grid-template-columns:1fr 1fr;min-width:0 }
+.workbench,.replay-board { border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--white) }
+.decision,.log,.replay-frame,.replay-files,.specimen-box,.return-form { min-width:0;padding:clamp(1rem,2.8vw,2rem) }
+.decision>p:not(.eyebrow) { color:var(--muted) }.log,.replay-files { border-left:1px solid var(--line);background:#f4f3e8 }
+.choices { display:grid;gap:.55rem;margin-top:1rem }
+.choice { text-align:left;width:100%;min-height:48px;border:1px solid #adb5a9;border-radius:6px;padding:.7rem .85rem;display:flex;align-items:center;gap:.7rem;background:var(--white);line-height:1.4 }
+.choice:before { content:"";width:.78rem;height:.78rem;flex:0 0 auto;border-radius:50%;border:1.5px solid #63766d }.choice:hover { background:var(--sky) }.choice[aria-pressed=true] { border-color:var(--pine);background:#e7eee3 }.choice[aria-pressed=true]:before { background:var(--pine);box-shadow:inset 0 0 0 2px #e7eee3 }
+.decision-foot { display:flex;gap:.65rem;flex-wrap:wrap;align-items:center;margin-top:.9rem }.text-btn { background:none;border:0;padding:.6rem 0;text-decoration:underline;text-underline-offset:.23em;color:var(--pine);min-height:44px;font-size:.86rem }
+.log h4,.replay-frame h3 { font:400 1.55rem/1.18 var(--serif);letter-spacing:-.025em;margin:.4rem 0 .65rem }
+.log p,.replay-frame p { margin:0 0 .7rem }
+.log .eyebrow { margin-bottom:.7rem }.idle-card { padding:1rem;border-left:3px solid var(--rust);background:#fcf9ef }.idle-card p:last-child { margin-bottom:0 }
+.beats { display:grid;gap:.4rem;list-style:none;margin:.7rem 0 0;padding:0 }.beats li { padding:.35rem 0 .45rem .8rem;border-left:2px solid #91ac96 }.beats li:last-child { border-color:var(--rust) }
+.beats strong,.packet-label { display:block;font:700 .72rem/1.4 var(--sans);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.15rem }
+.beats span { font-size:.93rem }.kind { display:inline-block;font:700 .75rem/1.4 var(--sans);color:var(--pine) }.kind.wrong { color:var(--rust) }
+details { margin:.9rem 0 0 }summary { cursor:pointer;color:var(--pine);font-weight:600;min-height:44px;padding:.55rem 0 }
+.snippet { background:var(--pine-dark);color:#f4f5e5;border-radius:6px;padding:.75rem;margin:0;font: .76rem/1.6 var(--mono);overflow:auto;tab-size:2;white-space:pre-wrap;overflow-wrap:anywhere }
+.snippet span { display:block;min-height:1.2em }.snippet .new-line { color:#fff1a9 }
+.packet,.ticket { display:block;white-space:pre-wrap;overflow-wrap:anywhere;font:.9rem/1.5 var(--mono);background:var(--white);border:1px solid var(--line);border-radius:5px;padding:.65rem .75rem;color:var(--ink) }
+.packet { margin:.6rem 0 0 }.control-row { display:flex;gap:.55rem;align-items:center;flex-wrap:wrap;margin:1rem 0 }.control-row label,.selector,.return-form label,.field-title { display:block;font-weight:700;font-size:.86rem;letter-spacing:0;text-transform:none;color:var(--ink) }
+#snippets:not(:empty) { margin-bottom:.85rem }#snippets details { margin:0 }#result-panel { scroll-margin-top:.75rem }
+.selector select { margin-left:.5rem }.controls { display:flex;flex-wrap:wrap;align-items:center;gap:.6rem;margin:.85rem 0 0 }.counter { color:var(--muted);font:.81rem var(--mono) }
+.replay-frame h3 { font-size:1.8rem }.replay-files .file-strip { flex-wrap:wrap }.file-strip small { color:var(--muted);font-size:.77rem }
+details .complete-trace { margin:.35rem 0 1rem;padding-left:1.45rem }.complete-trace li { margin-bottom:.6rem;font-size:.92rem }.complete-trace code { white-space:pre-wrap;overflow-wrap:anywhere }
+.practice-grid { align-items:stretch;border:1px solid var(--line);border-radius:9px;background:var(--white);overflow:hidden }.specimen-box { background:#f1eddf;border-right:1px solid var(--line) }
+.specimen-box select { margin:.15rem 0 1rem }.field-title { margin:0 } .packet-label { margin:1rem 0 .35rem }
+select,input { min-height:44px;padding:.5rem .65rem;border:1px solid #a6afa2;border-radius:5px;background:var(--white);max-width:100%;font-size:1rem }
+.return-form { align-content:center }.return-form label { margin-bottom:.4rem }.return-form input,.return-form select { width:100% }
+.fields { display:grid;grid-template-columns:1.2fr 1fr;gap:.85rem;margin:1rem 0 }.grade { margin-top:.9rem;border-left:3px solid var(--pine);padding:.3rem .2rem .3rem .8rem }.grade p { margin:0 0 .4rem }.grade.issue { border-left-color:var(--rust) }
+.answer { border-bottom:1px solid var(--line);padding-bottom:.3rem }.answer p { margin:.45rem 0 }.footer { padding:2rem 0;align-items:flex-start }.footer p { color:var(--muted);font-size:.85rem;margin:.2rem 0 }
+footer { background:#efecdf;border-top:1px solid var(--line) }.footer strong { font:600 1.35rem var(--serif) }.footer-links { display:flex;flex-wrap:wrap;gap:.45rem 1rem;justify-content:flex-end;font-size:.86rem }
+@media(max-width:760px) { .wrap { width:calc(100% - 36px) }.hero { grid-template-columns:1fr .75fr;gap:1.2rem }.bar { min-height:60px }nav { gap:.8rem }.section-head { display:block }.section-head>p { margin-top:.5rem!important }.fields { grid-template-columns:1fr }.decision,.log,.replay-frame,.replay-files,.specimen-box,.return-form { padding:1.05rem } }
+@media(max-width:620px) { html { scroll-padding-top:.45rem }.wrap { width:calc(100% - 32px) }.hero { grid-template-columns:1fr;gap:1.4rem;padding:2.2rem 0 1.7rem }.hero h1 { max-width:8.5em;font-size:clamp(3.2rem,12vw,4.7rem) }.hero-art { max-width:31rem;width:100% }.art-plate { transform:none;padding:.9rem 1rem }.art-title { margin:.6rem 0 }.file-strip { padding:.43rem .6rem }.hero-art .specimen { padding:.8rem 1rem }.hero-art .spec-title { margin:.45rem 0 }.workbench,.practice-grid,.replay-board { grid-template-columns:1fr }.log,.replay-files { border-left:0;border-top:1px solid var(--line) }.specimen-box { border-right:0;border-bottom:1px solid var(--line) }.footer { display:block }.footer-links { justify-content:flex-start;margin-top:.7rem }.bar { gap:.4rem }.wordmark { font-size:1.25rem }.mark { width:1.45rem;height:1.45rem;font-size:1.12rem;margin-right:.1rem }nav { gap:.45rem }nav a { font-size:.8rem }.route li:before { margin-right:.24rem }.fields { grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) }.section-head { margin-bottom:.8rem }.selector select { margin:.3rem 0 0;display:block } }
+@media(max-width:360px) { .fields { grid-template-columns:1fr }.wordmark { gap:.15rem } }
+@media(prefers-reduced-motion:reduce) { html { scroll-behavior:auto }*,*:before,*:after { animation:none!important;transition:none!important } }
+@media print { .mast nav,.button,.text-btn,.choices,.controls,.return-form,.skip { display:none }.wrap { width:100% }.hero { padding:1rem 0 }.section { break-inside:avoid }.workbench,.replay-board,.practice-grid { display:block }.log,.replay-files { border-left:0 }.footer { padding:1rem 0 } }
+</style>
+</head>
+<body>
+<a class="skip" href="#build">Skip to the exercise</a>
+<header class="mast"><div class="wrap bar">
+  <a class="wordmark" href="#top" aria-label="Agents 101, back to top"><span class="mark" aria-hidden="true">↻</span> Agents <em>101</em></a>
+  <nav aria-label="Lesson navigation"><a href="#build">Build</a><a href="#practice">Practice</a></nav>
+</div></header>
+<main class="wrap" id="top">
+  <section class="hero" aria-labelledby="lesson-title">
+    <div class="hero-copy"><div class="eyebrow"><span class="inkdot"></span>The Stamp Drawer · Offline simulation</div>
+      <h1 id="lesson-title">Count the rings.</h1><p class="dek">A model wants a number from a printed card. Play the program that takes its request, runs the counter and sends the answer back.</p>
+      <a class="button primary" href="#build">Start the lesson <span aria-hidden="true">↓</span></a>
+    </div>
+    <div class="hero-art"><div data-hero-card></div></div>
+  </section>
+  <section id="build" class="section" aria-labelledby="build-title">
+    <div class="section-head"><h2 id="build-title">Build the loop</h2><p>Choose what the program does at each step.</p></div>
+    <ol class="route" aria-label="The four decisions">
+      <li>Ask</li><li>Inspect</li><li>Run</li><li>Return</li>
+    </ol>
+    <div class="workbench">
+      <div class="decision">
+        <p class="eyebrow" id="step-label">Decision 1 of 4</p>
+        <h3 id="question" tabindex="-1">How will the model find the ring count?</h3>
+        <p id="context">The Tide card sits in the print drawer. The person at the counter can see the card. The model initially receives a question.</p>
+        <div id="choices" class="choices"></div>
+      </div>
+      <div class="log" id="result-panel" aria-labelledby="result-label">
+        <p class="eyebrow" id="result-label">Inside the program</p>
+        <div id="snippets"></div>
+        <div id="result" aria-live="polite"></div>
+        <div class="decision-foot" id="decision-foot"></div>
+      </div>
+    </div>
+  </section>
+  
+  <section id="practice" class="section" aria-labelledby="practice-title">
+    <div class="section-head"><div><p class="eyebrow"><span class="inkdot amber"></span>New exercise · Scripted model</p>
+      <h2 id="practice-title">Deliver the missing message</h2></div></div>
+    <p class="section-intro">The model asked a counter to count the rings on a stamp card. Its request is still open. Build the message the program must include on the next model turn.</p>
+    <div class="practice-grid"><div class="specimen-box">
+      <label class="field-title" for="card-select">Choose a practice card</label>
+      <select id="card-select"><option value="Fern">Fern</option><option value="Dusk">Dusk</option></select>
+      <div id="practice-specimen"></div><p class="packet-label">Outstanding request</p><code class="ticket" id="practice-order"></code>
+    </div>
+    <form id="return-form" class="return-form" novalidate>
+      <div><label for="destination">Where does the number go?</label><select id="destination" required>
+        <option value="">Choose a destination</option><option value="console">The program’s console</option>
+        <option value="tool">A tool message in the next model input</option><option value="user">A new user instruction</option>
+      </select></div>
+      <div class="fields"><div><label for="reply-to">Request ID to answer</label><input id="reply-to" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Type the ticket ID" required></div>
+        <div><label for="result-value">Ring count</label><input id="result-value" inputmode="numeric" autocomplete="off" pattern="[0-9]+" placeholder="Count the rings" required></div></div>
+      <button class="button primary" type="submit">Check my message <span aria-hidden="true">→</span></button>
+      <div id="grade" aria-live="polite"></div>
+    </form></div>
+    <details class="answer" id="answer"><summary>Check against the answer sheet</summary><div id="key-body"></div></details>
+  </section>
+  <noscript><section class="section"><h2>Paper version</h2><p>The program offers a counter. The model requests a count, the program calls the counter and includes the result with its request ID in the next model input. A final reply with an empty list of calls ends the run.</p><p>Fern’s marks are bar, ring, bar, ring, bar. Its ticket is press-24. Write the return message, then check the <a href="answer-key.txt">answer sheet</a>. The choices and step controls need JavaScript.</p></section></noscript>
+</main>
+<footer><div class="wrap footer"><div><strong>Agents 101</strong><p>The Stamp Drawer · Original standalone exercise</p></div>
+<div class="footer-links"><a href="synthetic-traces.json">Scripted traces</a><a href="REUSE.txt">Reuse terms</a><a href="answer-key.txt">Answer sheet</a><a href="#top">Back to top ↑</a></div></div></footer>
+<script type="application/json" id="lesson-data">{"cards":{"Tide":{"ticket":"press-17","marks":["ring","bar","ring","ring","bar"]},"Fern":{"ticket":"press-24","marks":["bar","ring","bar","ring","bar"]},"Dusk":{"ticket":"press-38","marks":["ring","ring","bar","ring","ring"]}},"localBuild":true,"code":["question = {\"role\": \"user\", \"card\": card, \"text\": f\"How many rings are on {card}?\"}","first = scripted_reply([question], [TOOL])","if not first[\"calls\"]:","    return {\"scenario\": \"synthetic\", \"final_reply\": first, \"stopped\": True}","job = first[\"calls\"][0]","value = count_rings(job[\"card\"])","delivery = {\"role\": \"tool\", \"reply_to\": job[\"id\"], \"value\": value}","second = scripted_reply([question, first, delivery], [TOOL])","assert second[\"calls\"] == []"],"codeLabel":"Fixture code","goodTag":"Scripted example","badTag":"Illustrated wrong turn","decisions":[{"question":"How will the model find the ring count?","context":"The Tide card sits in the print drawer. The person at the counter can see the card. The model initially receives a question.","input":"How many rings are on Tide?","through":2,"replaceAt":1,"replaceWith":"first = scripted_reply([question], [])","choices":[{"label":"Offer the count_rings tool","correct":true,"title":"The model sends a work ticket.","notes":["How many rings are on Tide?","Send the question with the name of the available counter.","The scripted model says “I’ll count the rings” and requests count_rings(\"Tide\") under ticket press-17."]},{"label":"Send only the card’s name","correct":false,"title":"The model asks for the card.","notes":["How many rings are on Tide?","Send the question with an empty list of available tools.",""]}]},{"question":"Does “I’ll count the rings” finish the job?","context":"The first reply includes that sentence and a work ticket. Decide which part controls the program.","input":"“I’ll count the rings.”   count_rings(\"Tide\")   press-17","through":4,"replaceAt":2,"replaceWith":"if first[\"text\"]:","choices":[{"label":"Treat the sentence as the final answer","correct":false,"title":"The counter never gets a turn.","notes":["The reply has text and a work ticket.","Stop as soon as any words appear.","The person gets a promise. Nobody counted the rings."]},{"label":"Keep going while the ticket is open","correct":true,"title":"The counter has a job.","notes":["The reply includes ticket press-17.","Look for an outstanding tool request.","The program can now dispatch the request to the count_rings function."]}]},{"question":"What should the program return from the counter?","context":"The request names the Tide card. Its ID tells the program which request the eventual result belongs to.","input":"count_rings(\"Tide\")   press-17","through":6,"replaceAt":5,"replaceWith":"value = job[\"card\"]","choices":[{"label":"Count the ring impressions on Tide","correct":true,"title":"The value comes from the printed marks.","notes":["The ticket names the Tide card.","Run the read-only counter on that card.",""]},{"label":"Return the word Tide","correct":false,"title":"The card label comes back.","notes":["The ticket names the Tide card.","Copy the requested card name.","A card label identifies the input. The learner asked for a number."]}]},{"question":"Which delivery completes the exchange?","context":"The counter has returned 3. The model still has an outstanding tool request with ID press-17.","input":"Value 3 · open ticket press-17","through":9,"replaceAt":6,"replaceWith":"print(value)\nsecond = scripted_reply([question, first], [TOOL])","choices":[{"label":"Print 3 on the operator’s screen","correct":false,"title":"The operator sees the number.","notes":["The counter returned 3.","Write the number to the console.","The model’s next input is missing its tool message. The scripted model rejects that incomplete exchange."]},{"label":"Send 3 back on ticket press-17","correct":true,"title":"The second reply can answer the question.","notes":["The counter returned 3.","Append a tool message with the matching ticket and send the conversation again.",""]}],"replaceCount":2}],"completeTitle":"The model has its answer.","completeNote":"A second model turn receives the matching result and answers with zero open tickets. Try a different card yourself below.","nextLabel":"Try the practice card ↓","nextLink":"#practice","examplePath":""}</script>
+<script>"use strict";
+const book = JSON.parse(document.getElementById("lesson-data").textContent);
+const byId = (id) => document.getElementById(id);
+const escapeText = (value) => String(value).replace(/[&<>"']/g, (c) => (
+  {"&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"}[c]
+));
+const prefersStill = matchMedia("(prefers-reduced-motion: reduce)");
+let stage = 0;
+let selection = null;
+let finished = false;
+let renderToken = 0;
+
+function marksCard(name) {
+  const card = book.cards[name];
+  const marks = card.marks.map((shape) =>
+    `<span aria-hidden="true" class="impression ${escapeText(shape)}"></span>`
+  ).join("");
+  return `<div class="specimen">
+    <div class="spec-header"><span class="plate-caption">Printed specimen</span><span class="counter">${card.ticket}</span></div>
+    <p class="spec-title">${escapeText(name)}</p>
+    <div class="impressions" role="img" aria-label="Impressions from left to right: ${card.marks.join(", ")}">${marks}</div>
+    <div class="spec-foot"><span>○ Ring &nbsp; ━ Bar</span><span>Count rings only</span></div>
+  </div>`;
+}
+
+function countRings(card) {
+  return book.cards[card].marks.filter((mark) => mark === "ring").length;
+}
+
+function firstTurn(card, offered) {
+  if (!offered.includes("count_rings")) {
+    return {role:"assistant", text:"Please show me the card.", calls:[]};
+  }
+  return {role:"assistant", text:"I'll count the rings.",
+    calls:[{name:"count_rings", card, id:book.cards[card].ticket}]};
+}
+
+function secondTurn(question, first, delivered) {
+  const job = first.calls[0];
+  if (delivered.role !== "tool" || delivered.reply_to !== job.id) {
+    throw new Error("A matching tool message is needed.");
+  }
+  return {
+    nextInput:[question, first, delivered],
+    reply:{role:"assistant", text:`${job.card} has ${delivered.value} rings.`, calls:[]}
+  };
+}
+
+function outcomeFor(decision, choice) {
+  const outcome = decision.choices[choice];
+  if (!book.localBuild) return outcome;
+  const first = firstTurn("Tide", ["count_rings"]);
+  const job = first.calls[0];
+  const notes = outcome.notes.slice();
+  if (stage === 0 && !outcome.correct) notes[2] = firstTurn("Tide", []).text;
+  if (stage === 2 && outcome.correct) notes[2] = `The local counter returns ${countRings(job.card)}. The program is holding that number.`;
+  if (stage === 3 && outcome.correct) {
+    const value = countRings(job.card);
+    const delivery = {role:"tool", reply_to:job.id, value};
+    const next = secondTurn({role:"user", card:job.card}, first, delivery);
+    notes[2] = `“${next.reply.text}” The scripted reply has ${next.reply.calls.length} tool requests. The program stops.`;
+  }
+  return {...outcome, notes};
+}
+
+function stageProgress() {
+  document.querySelectorAll(".route li").forEach((item, index) => {
+    item.className = index < stage || finished ? "done" : index === stage ? "current" : "";
+    if (index === stage && !finished) item.setAttribute("aria-current", "step");
+    else item.removeAttribute("aria-current");
+  });
+}
+
+function makeButton(label, className, action) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = className;
+  button.textContent = label;
+  button.addEventListener("click", action);
+  return button;
+}
+
+function startStage(focus = false) {
+  ++renderToken;
+  selection = null;
+  finished = false;
+  const decision = book.decisions[stage];
+  byId("step-label").textContent = `Decision ${stage + 1} of 4`;
+  byId("question").textContent = decision.question;
+  byId("context").textContent = decision.context;
+  byId("result").innerHTML = `<div class="idle-card"><p class="kind">Input</p><p>${escapeText(decision.input)}</p></div>`;
+  byId("snippets").replaceChildren();
+  byId("choices").replaceChildren();
+  decision.choices.forEach((answer, index) => {
+    const b = makeButton(answer.label, "choice", () => choose(index));
+    b.setAttribute("aria-pressed", "false");
+    byId("choices").append(b);
+  });
+  byId("decision-foot").replaceChildren();
+  if (stage > 0) byId("decision-foot").append(makeButton("Previous decision", "text-btn", () => {
+    stage -= 1;
+    startStage(true);
+  }));
+  stageProgress();
+  if (focus) byId("question").focus();
+}
+
+function showCode(decision, answer, onReady) {
+  const start = stage === 0 ? 0 : book.decisions[stage - 1].through;
+  const lines = book.code.slice(0, decision.through);
+  if (!answer.correct) {
+    lines.splice(decision.replaceAt, decision.replaceCount || 1, ...decision.replaceWith.split("\n"));
+  }
+  const previous = lines.slice(0, start).map((line) => `<span>${escapeText(line)}</span>`).join("");
+  const current = lines.slice(start).join("\n");
+  const ticket = ++renderToken;
+  const container = byId("snippets");
+  const label = answer.correct ? book.codeLabel : "Illustrated variant";
+  container.innerHTML = `<details open><summary>${escapeText(label)} · lines 1–${lines.length}</summary>
+    <pre class="snippet" aria-label="Code for this choice"><code>${previous}<span class="new-line"></span></code></pre></details>`;
+  const typed = container.querySelector(".new-line");
+  const duration = prefersStill.matches ? 0 : Math.min(470, current.length * 3);
+  const startTime = performance.now();
+  function draw(now) {
+    if (ticket !== renderToken) return;
+    const progress = duration ? Math.min(1, (now - startTime) / duration) : 1;
+    typed.textContent = current.slice(0, Math.ceil(progress * current.length));
+    if (progress === 1) onReady();
+    else requestAnimationFrame(draw);
+  }
+  draw(startTime);
+}
+
+function choose(index) {
+  selection = index;
+  const decision = book.decisions[stage];
+  const answer = outcomeFor(decision, index);
+  [...byId("choices").children].forEach((button, i) => button.setAttribute("aria-pressed", String(i === index)));
+  byId("decision-foot").replaceChildren();
+  byId("result").innerHTML = `<p class="kind">Tracing this choice…</p>`;
+  if (matchMedia("(max-width: 620px)").matches) {
+    byId("result-panel").scrollIntoView({block:"start", behavior:prefersStill.matches ? "instant" : "smooth"});
+  }
+  showCode(decision, answer, () => {
+    const labels = ["Input","Action","Result"];
+    const beats = answer.notes.map((note,i) =>
+      `<li><strong>${labels[i]}</strong><span>${escapeText(note)}</span></li>`
+    ).join("");
+    const tag = answer.correct ? book.goodTag : book.badTag;
+    byId("result").innerHTML = `<span class="kind ${answer.correct ? "" : "wrong"}">${escapeText(tag)}</span>
+      <h4>${escapeText(answer.title)}</h4><ol class="beats">${beats}</ol>`;
+    const foot = byId("decision-foot");
+    if (answer.correct) {
+      foot.append(makeButton(stage === 3 ? "Finish the loop →" : "Next decision →", "button primary", () => {
+        if (stage === 3) finishBuild();
+        else { stage += 1; startStage(true); }
+      }));
+    } else {
+      foot.append(makeButton("Try the other choice", "text-btn", () => {
+        const other = 1 - selection;
+        [...byId("choices").children][other].focus();
+      }));
+    }
+    if (stage > 0) foot.append(makeButton("Previous decision", "text-btn", () => { stage -= 1; startStage(true); }));
+  });
+}
+
+function finishBuild() {
+  finished = true;
+  stageProgress();
+  byId("step-label").textContent = "Four decisions complete";
+  byId("question").textContent = book.completeTitle;
+  byId("context").textContent = book.completeNote;
+  byId("choices").replaceChildren();
+  byId("decision-foot").replaceChildren();
+  const link = document.createElement("a");
+  link.className = "button primary";
+  link.href = book.nextLink;
+  link.textContent = book.nextLabel;
+  byId("decision-foot").append(link, makeButton("Start again", "text-btn", () => { stage = 0; startStage(true); }));
+  byId("question").focus();
+}
+
+function practiceCard() {
+  const name = byId("card-select").value;
+  const first = firstTurn(name, ["count_rings"]);
+  const job = first.calls[0];
+  byId("practice-specimen").innerHTML = marksCard(name);
+  byId("practice-order").textContent = `count_rings("${job.card}")\nRequest ID  ${job.id}`;
+  byId("reply-to").value = "";
+  byId("result-value").value = "";
+  byId("destination").value = "";
+  byId("grade").replaceChildren();
+  byId("answer").open = false;
+  const count = countRings(name);
+  const receipt = {role:"tool", reply_to:job.id, value:count};
+  byId("key-body").innerHTML = `<p>Read across ${escapeText(name)}: <strong>${book.cards[name].marks.join(" · ")}</strong>. That gives ${count} rings.</p>
+    <p>Append the following message after the assistant’s request. Send that conversation on the next model turn.</p>
+    <pre class="packet">${escapeText(JSON.stringify(receipt))}</pre>
+    <p>The returned answer has an empty calls list. You can check its count directly against the marks.</p>
+    <p><a href="${book.examplePath}answer-key.txt">Three-card answer sheet</a> · <a href="${book.examplePath}simulate.py" download>Python reference</a> · <a href="${book.examplePath}cards.json" download>Card patterns</a></p>`;
+}
+
+function grade(event) {
+  event.preventDefault();
+  const name = byId("card-select").value;
+  const first = firstTurn(name, ["count_rings"]);
+  const job = first.calls[0];
+  const role = byId("destination").value;
+  const id = byId("reply-to").value.trim();
+  const rawValue = byId("result-value").value.trim();
+  const count = countRings(name);
+  const errors = [];
+  if (role !== "tool") errors.push(role === "console" ? "Printing shows the count to the person watching. Which message will the model receive?" : "The next input needs a tool message answering the assistant’s request.");
+  if (id !== job.id) errors.push("Match the ID printed on this card’s open request.");
+  if (!/^[0-9]+$/.test(rawValue) || Number(rawValue) !== count) errors.push("Count only the hollow rings. Each straight bar contributes zero.");
+  if (errors.length) {
+    byId("grade").innerHTML = `<div class="grade issue"><strong>Check the return message</strong>${errors.map(e=>`<p>${escapeText(e)}</p>`).join("")}</div>`;
+    return;
+  }
+  const delivery = {role, reply_to:id, value:Number(rawValue)};
+  const next = secondTurn({role:"user", text:`How many rings are on ${name}?`}, first, delivery);
+  byId("grade").innerHTML = `<div class="grade"><strong>Message delivered</strong>
+    <p>The second input contains the question, the assistant’s request and your tool message.</p><pre class="packet">${escapeText(JSON.stringify(next.nextInput[2]))}</pre>
+    <p>The scripted model answers “${escapeText(next.reply.text)}” Its calls list is empty. Stop here.</p></div>`;
+}
+
+if (document.querySelector("[data-hero-card]")) document.querySelector("[data-hero-card]").innerHTML = marksCard("Tide");
+byId("card-select").addEventListener("change", practiceCard);
+document.querySelector(".return-form").addEventListener("submit", grade);
+document.querySelector(".return-form").addEventListener("input", () => byId("grade").replaceChildren());
+practiceCard();
+startStage();
+</script>
+
+</body>
+</html>

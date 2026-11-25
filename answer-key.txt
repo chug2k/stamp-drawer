@@ -1,0 +1,31 @@
+THE STAMP DRAWER
+Independent answer sheet
+
+Count the circular impressions on the printed card. Each short straight bar is one bar.
+
+Card   Impressions from left to right    Tool ticket   Rings
+Tide   ring bar ring ring bar            press-17      3
+Fern   bar ring bar ring bar             press-24      2
+Dusk   ring ring bar ring ring           press-38      4
+
+For Fern the next model input must include the original question, the
+assistant's request and this tool message, in that order.
+
+  {"role": "tool", "reply_to": "press-24", "value": 2}
+
+For Dusk the tool message is
+
+  {"role": "tool", "reply_to": "press-38", "value": 4}
+
+The assistant replies with the count and an empty calls list. The program
+stops at that point. Each complete example has two scripted model turns
+and one actual call to a local counter. The number can be checked directly
+from the impressions. The empty list checks only that the loop should stop.
+
+A printed count reaches the person watching the console. Sending a matching
+tool message makes the count part of the model's next input. The ticket
+identifies which outstanding request the message answers.
+
+With Python 3, run “python3 simulate.py --card Fern” to print the messages.
+Run “python3 simulate.py --check” to compare all three cards to this key
+and exercise a missing result, a wrong role, and a mismatched ticket.

@@ -1,0 +1,152 @@
+{
+  "classification": "New deterministic simulations. Model turns are scripted and the counter runs locally.",
+  "runs": [
+    {
+      "scenario": "synthetic",
+      "prompt": {
+        "role": "user",
+        "card": "Tide",
+        "text": "How many rings are on Tide?"
+      },
+      "first_reply": {
+        "role": "assistant",
+        "text": "I'll count the rings.",
+        "calls": [
+          {
+            "name": "count_rings",
+            "card": "Tide",
+            "id": "press-17"
+          }
+        ]
+      },
+      "tool_value": 3,
+      "next_input": [
+        {
+          "role": "user",
+          "card": "Tide",
+          "text": "How many rings are on Tide?"
+        },
+        {
+          "role": "assistant",
+          "text": "I'll count the rings.",
+          "calls": [
+            {
+              "name": "count_rings",
+              "card": "Tide",
+              "id": "press-17"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "reply_to": "press-17",
+          "value": 3
+        }
+      ],
+      "final_reply": {
+        "role": "assistant",
+        "text": "Tide has 3 rings.",
+        "calls": []
+      },
+      "stopped": true
+    },
+    {
+      "scenario": "synthetic",
+      "prompt": {
+        "role": "user",
+        "card": "Fern",
+        "text": "How many rings are on Fern?"
+      },
+      "first_reply": {
+        "role": "assistant",
+        "text": "I'll count the rings.",
+        "calls": [
+          {
+            "name": "count_rings",
+            "card": "Fern",
+            "id": "press-24"
+          }
+        ]
+      },
+      "tool_value": 2,
+      "next_input": [
+        {
+          "role": "user",
+          "card": "Fern",
+          "text": "How many rings are on Fern?"
+        },
+        {
+          "role": "assistant",
+          "text": "I'll count the rings.",
+          "calls": [
+            {
+              "name": "count_rings",
+              "card": "Fern",
+              "id": "press-24"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "reply_to": "press-24",
+          "value": 2
+        }
+      ],
+      "final_reply": {
+        "role": "assistant",
+        "text": "Fern has 2 rings.",
+        "calls": []
+      },
+      "stopped": true
+    },
+    {
+      "scenario": "synthetic",
+      "prompt": {
+        "role": "user",
+        "card": "Dusk",
+        "text": "How many rings are on Dusk?"
+      },
+      "first_reply": {
+        "role": "assistant",
+        "text": "I'll count the rings.",
+        "calls": [
+          {
+            "name": "count_rings",
+            "card": "Dusk",
+            "id": "press-38"
+          }
+        ]
+      },
+      "tool_value": 4,
+      "next_input": [
+        {
+          "role": "user",
+          "card": "Dusk",
+          "text": "How many rings are on Dusk?"
+        },
+        {
+          "role": "assistant",
+          "text": "I'll count the rings.",
+          "calls": [
+            {
+              "name": "count_rings",
+              "card": "Dusk",
+              "id": "press-38"
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "reply_to": "press-38",
+          "value": 4
+        }
+      ],
+      "final_reply": {
+        "role": "assistant",
+        "text": "Dusk has 4 rings.",
+        "calls": []
+      },
+      "stopped": true
+    }
+  ]
+}
